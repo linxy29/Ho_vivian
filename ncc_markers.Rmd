@@ -1,0 +1,31 @@
+---
+title: "ncc markers goterm"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r}
+library(tidyverse)
+library(gprofiler2)
+```
+
+## Read markers
+
+```{r}
+markersDF = read_csv("/storage/holab/linxy/vivian/scanpy/ncc_scanpy_markers.csv") %>% 
+  select(-...1)
+```
+
+```{r}
+gene_enrichment = rep(NA, ncol(markersDF))
+for (i in 1:ncol(markersDF)){
+  gene_enrichment[i] =  markersDF[1:20,] %>% pull(as.character(i-1)) %>% gost() %>% 
+    .$result %>% slice_head(n = 20) %>% .$term_name %>% paste(collapse=", ")
+}
+```
+
+```{r}
+data.frame(cluster = names(markersDF), gene_enrichment) %>% knitr::kable()
+```
+
