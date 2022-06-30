@@ -10,8 +10,8 @@ pathSPC = "/storage/holab/linxy/vivian/veloAE/"  ## for server
 options(future.globals.maxSize = 40000 * 1024^2)
 
 
-load("/storage/holab/linxy/vivian/seuratObj/clustered_ncc.rdata")
-DimPlot(ncc, reduction = "umap", label = T)
+ncc = readRDS("/storage/holab/linxy/vivian/seuratObj/2022-05-31_ncc.merged.filtered7.5.clustered.RDS")
+DimPlot(ncc, label = T)
 
 
 head(Cells(ncc))
