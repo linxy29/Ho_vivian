@@ -19,7 +19,7 @@ integrateObj <- NormalizeData(object = integrateObj, assay = 'SCT.CC.reg.subset'
 matrisome_comp = intersect(rownames(fastMNN_data), matrisomeL)
 tf_comp = intersect(rownames(fastMNN_data), tfL)
 
-### NCC vs iPSC
+
 cell_numC = table(integrateObj@meta.data$orig.ident, Idents(integrateObj))
 # function 8: calculate p-values of fisher's exact test
 getFisher = function(counts1, counts2){
@@ -49,13 +49,51 @@ ipsc_ncc_fisher = getFisher(cell_numC["ipsc_nc_diff",], cell_numC["NCC",])
 fisher_res = rbind(ipsc_mes_fisher, ipsc_ncc_fisher)
 colnames(fisher_res) = colnames(cell_numC)
 
-#### one cell type
-cell_type = celltypeL[1]
-cell_numM = matrix(nrow = length(matrisome_comp), ncol = 2)
-celltype_subset = subset(integrateObj, idents = cell_type)
-ncc_celltype_subset = subset(integrateObj, ) 
-fastMNN_data = integrateObj@assays$SCT.CC.reg.subset@data
+## DE genes
+code_ident = Idents(integrateObj) %>% as.character()
+code_ident = ifelse(code_ident == "Cell cycle", "cell_cycle", code_ident)
+code_ident = ifelse(code_ident == "IPSC meso, MES", "ipsc_meso_mes", code_ident)
+code_ident = ifelse(code_ident == "Dev", "dev", code_ident)
+code_ident = ifelse(code_ident == "NLC", "nlc", code_ident)
+code_ident = ifelse(code_ident == "Cardiac mesoderm", "cardiac_mesoderm", code_ident)
+code_ident = ifelse(code_ident == "Endoderm", "endoderm", code_ident)
+code_ident = ifelse(code_ident == "MES, dev", "mes_dev", code_ident)
+code_ident %>% unique()
 
-matrisome_data = fastMNN_data[intersect(rownames(fastMNN_data), matrisomeL),]
-tf_data = fastMNN_data[intersect(rownames(fastMNN_data), tfL),]
+code_ident = str_c(code_ident, "_", integrateObj@meta.data$orig.ident)
+integrateObj$ident_sample = code_ident
+Idents(integrateObj) = 'ident_sample'
 
+## ncc vs iPSC
+ncc_markerL = list()
+ncc_markerV = rep(NA, 3)
+ncc_celltype = c("cell_cycle", "nlc", "mes_dev")
+i = 1
+for (celltype in ncc_celltype) {
+  temp = FindMarkers(integrateObj, ident.1 = str_c(celltype, "_ipsc_nc_diff"), ident.2 = str_c(celltype, "_NCC"), min.pct = 0.25)
+  ncc_markerL[[celltype]] = temp
+  ncc_markerV[i] = temp %>% 
+    filter(p_val_adj < 0.05) %>% 
+    rownames_to_column("gene") %>% 
+    .$gene %>% 
+    paste(collapse=" ")
+  i = i+1
+}
+
+## mes vs iPSC
+mes_markerL = list()
+mes_markerV = rep(NA, 3)
+mes_celltype = c("ipsc_meso_mes", "dev", "nlc", "cardiac_mesoderm", "endoderm")
+i = 1
+for (celltype in mes_celltype) {
+  temp = FindMarkers(integrateObj, ident.1 = str_c(celltype, "_ipsc_nc_diff"), ident.2 = str_c(celltype, "_MES"), min.pct = 0.25)
+  mes_markerL[[celltype]] = temp
+  mes_markerV[i] = temp %>% 
+    filter(p_val_adj < 0.05) %>% 
+    rownames_to_column("gene") %>% 
+    .$gene %>% 
+    paste(collapse=" ")
+  i = i+1
+}
+
+save(ncc_markerL, ncc_markerV, mes_markerL, mes_markerV, file = "similarity_analysis.RData")
