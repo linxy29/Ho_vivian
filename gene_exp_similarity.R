@@ -96,4 +96,4 @@ for (celltype in mes_celltype) {
   i = i+1
 }
 
-save(ncc_markerL, ncc_markerV, mes_markerL, mes_markerV, file = "similarity_analysis.RData")
+save(ncc_markerL, ncc_markerV, mes_markerL, mes_markerV, file = "/storage/holab/linxy/vivian/similarity_analysis.RData")
