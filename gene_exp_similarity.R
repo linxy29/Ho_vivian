@@ -44,10 +44,39 @@ getFisher = function(counts1, counts2){
   return(fisher_pvals)
 }
 
+## the ratio of the odds of the event occurs in group1 comparing to group2
+## probability of event/probability of non-event
+getOddRatio = function(counts1, counts2){
+  ### Check counts1 and counts2 shape
+  if (length(counts1) == 1 || is.null(dim(counts1)) || length(dim(counts1)) < 2) {
+    counts1 = matrix(counts1, nrow=1)
+  }
+  if (length(counts2) == 1 || is.null(dim(counts2)) ||
+      length(dim(counts2)) < 2) {
+    counts2 = matrix(counts2, nrow=1)
+  }
+  ### set up
+  totalCounts1 = colSums(counts1)
+  totalCounts2 = colSums(counts2)
+  count_mtrx = rbind(totalCounts1, totalCounts2)
+  ### test 
+  odd_ratio = rep(NA,ncol(count_mtrx))
+  for (i in 1:ncol(count_mtrx)) {
+    tested_table = cbind(count_mtrx[, i], rowSums(count_mtrx)-count_mtrx[, i])
+    odd_ratio[i] = tested_table[1,1]*tested_table[2,2]/(tested_table[1,2]*tested_table[2,1])
+  }
+  return(odd_ratio)
+}
+
 ipsc_mes_fisher = getFisher(cell_numC["ipsc_nc_diff",], cell_numC["MES",])
 ipsc_ncc_fisher = getFisher(cell_numC["ipsc_nc_diff",], cell_numC["NCC",])
 fisher_res = rbind(ipsc_mes_fisher, ipsc_ncc_fisher)
 colnames(fisher_res) = colnames(cell_numC)
+
+ipsc_mes_OR = getOddRatio(cell_numC["ipsc_nc_diff",], cell_numC["MES",])
+ipsc_ncc_OR = getOddRatio(cell_numC["ipsc_nc_diff",], cell_numC["NCC",])
+oddratio_res = rbind(ipsc_mes_OR, ipsc_ncc_OR)
+colnames(oddratio_res) = colnames(cell_numC)
 
 ## DE genes
 code_ident = Idents(integrateObj) %>% as.character()
